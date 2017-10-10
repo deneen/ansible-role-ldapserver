@@ -1,0 +1,89 @@
+---
+# tasks file for ldapserver
+
+- name: Install ldapserver package
+  become: yes
+  yum:
+    name: openldap-servers
+    state: present
+
+- name: Enable slapd
+  become: yes
+  service:
+    name: slapd
+    enabled: yes
+  
+- name: Start slapd
+  become: yes
+  service:
+    name: slapd
+    state: started
+
+- name: Check if ldapserver already configured
+  become: yes
+  stat:
+    path: /var/lib/ldap/DB_CONFIG
+  register: dbcfg
+
+- name: Get ldap root password
+  command: /sbin/slappasswd -s {{ ldap_root_passwd }}
+  register: ldap_root_hash
+  when: not dbcfg.stat.exists
+
+- name: Create configuration ldif files
+  become: yes
+  template:
+    src: "{{ item }}.j2"
+    dest: "/etc/openldap/{{ item }}"
+    owner: ldap
+    group: ldap
+    mode: 0600
+  with_items:
+    - db.ldif
+    - monitor.ldif
+    - tls.ldif
+    - base.ldif
+  when: not dbcfg.stat.exists
+
+- name: Apply configuration ldif files
+  become: yes
+  shell: "/usr/bin/ldapmodify -Y EXTERNAL  -H ldapi:/// -f /etc/openldap/{{ item }}"
+  with_items:
+    - db.ldif
+    - monitor.ldif
+    - tls.ldif
+  when: not dbcfg.stat.exists
+    
+- name: Update the schema
+  become: yes
+  shell: "/usr/bin/ldapadd -Y EXTERNAL  -H ldapi:/// -f {{ item }}"
+  with_items:
+    "{{ schema_adds }}"
+  when: not dbcfg.stat.exists
+
+- name: Install the DB_CONFIG
+  become: yes
+  copy:
+    src: "{{ role_path }}/files/DB_CONFIG"
+    dest: /var/lib/ldap/DB_CONFIG
+  when: not dbcfg.stat.exists
+
+- name: Ensure ownership of LDAP db
+  become: yes
+  file: 
+    dest: /var/lib/ldap
+    owner: ldap
+    group: ldap
+    recurse: yes
+
+- name: Check if LDAP db has been initialized
+  become: yes
+  stat:
+    path: /var/lib/ldap/ou.bdb
+  register: ldapdb
+  
+
+- name: Initialize LDAP db
+  become: yes
+  shell: "/usr/bin/ldapadd -x -w {{ ldap_root_passwd }} -D 'cn={{ ldap_root }},{{ ldap_base }}' -f /etc/openldap/base.ldif"
+  when: not ldapdb.stat.exists

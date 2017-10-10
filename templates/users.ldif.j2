@@ -1,0 +1,19 @@
+{% for user in users %}
+dn: uid={{ user.name }},ou=People,{{ ldap_base }}
+objectClass: top
+objectClass: account
+objectClass: posixAccount
+objectClass: shadowAccount
+cn: {{ user.name }}
+uid: {{ user.name }}
+uidNumber: {{ user.uidnumber }}
+gidNumber: {{ user.gidnumber }}
+homeDirectory: /home/{{ user.name }}
+loginShell: /bin/bash
+gecos: {{ user.description }}
+userPassword: {crypt}x
+shadowLastChange: {{ last_change }}
+shadowMin: 0
+shadowMax: 90
+shadowWarning: 7
+{% endfor %}

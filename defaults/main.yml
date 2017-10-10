@@ -1,0 +1,14 @@
+---
+# defaults file for ldapserver
+ldap_top: dragonslayer
+ldap_base: "dc={{ldap_top}},dc=local"
+ldap_root: ldapadm
+server_cert: "{{ ansible_nodename }}.cert"
+server_key: "{{ ansible_nodename}}.key"
+ca_cert: cacert.pem
+ldap_root_passwd: 'Pa88w0rd'
+schema_adds:
+  - /etc/openldap/schema/cosine.ldif
+  - /etc/openldap/schema/nis.ldif
+  - /etc/openldap/schema/inetorgperson.ldif
+
