@@ -1,5 +1,0 @@
-set_lk_detect DB_LOCK_EXPIRE
-set_lg_max 5242880
-set_cachesize 0 5242880 1
-txn_checkpoint 128 15 0
-set_flags DB_LOG_AUTOREMOVE

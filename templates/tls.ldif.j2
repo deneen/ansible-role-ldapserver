@@ -1,17 +1,17 @@
 dn: cn=config
 changetype: modify
 replace: olcTLSCertificateFile
-olcTLSCertificateFile: /etc/openldap/certs/{{ server_cert }}
+olcTLSCertificateFile: {{ server_cert }}
 
 dn: cn=config
 changetype: modify
 replace: olcTLSCertificateKeyFile
-olcTLSCertificateKeyFile: /etc/openldap/certs/{{ server_key }}
+olcTLSCertificateKeyFile: {{ server_key }}
 
 dn: cn=config
 changetype: modify
 replace: olcTLSCACertificateFile
-olcTLSCACertificateFile: /etc/openldap/certs/{{ ca_cert }}
+olcTLSCACertificateFile: {{ ca_cert }}
 
 dn: cn=config
 changetype: modify

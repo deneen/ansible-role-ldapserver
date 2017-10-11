@@ -1,0 +1,9 @@
+{% if db_lock_expire %}
+set_lk_detect DB_LOCK_EXPIRE
+{% endif %}
+set_lg_max {{ db_lg_max }}
+set_cachesize {{ db_cachesize }}
+txn_checkpoint {{ db_checkpoint }}
+{% if db_log_autoremove %}
+set_flags DB_LOG_AUTOREMOVE
+{% endif %}

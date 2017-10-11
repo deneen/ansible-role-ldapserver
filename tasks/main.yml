@@ -63,8 +63,8 @@
 
 - name: Install the DB_CONFIG
   become: yes
-  copy:
-    src: "{{ role_path }}/files/DB_CONFIG"
+  template:
+    src: "DB_CONFIG.j2"
     dest: /var/lib/ldap/DB_CONFIG
   when: not dbcfg.stat.exists
 
@@ -82,8 +82,25 @@
     path: /var/lib/ldap/ou.bdb
   register: ldapdb
   
-
 - name: Initialize LDAP db
   become: yes
   shell: "/usr/bin/ldapadd -x -w {{ ldap_root_passwd }} -D 'cn={{ ldap_root }},{{ ldap_base }}' -f /etc/openldap/base.ldif"
   when: not ldapdb.stat.exists
+
+- name: Copy CA
+  become: yes
+  copy:
+    src: "{{ ca_source_cert }}"
+    dest: "{{ ca_cert }}"
+
+- name: Copy Server Cert
+  become: yes
+  copy:
+    src: "{{ server_source_cert }}"
+    dest: "{{ server_cert }}"
+
+- name: Copy Server Key
+  become: yes
+  copy:
+    src: "{{ server_source_cert }}"
+    dest: "{{ server_key }}"
