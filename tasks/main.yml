@@ -4,9 +4,12 @@
 - name: Install ldapserver package
   become: yes
   yum:
-    name: openldap-servers
+    name: "{{ item }}"
     state: present
-
+  with_items:
+    - openldap-servers
+    - python-ldap
+    
 - name: Enable slapd
   become: yes
   service:
@@ -19,54 +22,30 @@
     name: slapd
     state: started
 
-- name: Check if ldapserver already configured
+- name: Set LDAP attributes
   become: yes
-  stat:
-    path: /var/lib/ldap/DB_CONFIG
-  register: dbcfg
-
-- name: Get ldap root password
-  command: /sbin/slappasswd -s {{ ldap_root_passwd }}
-  register: ldap_root_hash
-  when: not dbcfg.stat.exists
-
-- name: Create configuration ldif files
-  become: yes
-  template:
-    src: "{{ item }}.j2"
-    dest: "/etc/openldap/{{ item }}"
-    owner: ldap
-    group: ldap
-    mode: 0600
+  ldap_attr:
+    dn: "{{ item.dn }}"
+    name: "{{ item.attr }}"
+    state: exact
+    values: "{{ item.value }}"
   with_items:
-    - db.ldif
-    - monitor.ldif
-    - tls.ldif
-    - base.ldif
-  when: not dbcfg.stat.exists
-
-- name: Apply configuration ldif files
-  become: yes
-  shell: "/usr/bin/ldapmodify -Y EXTERNAL  -H ldapi:/// -f /etc/openldap/{{ item }}"
-  with_items:
-    - db.ldif
-    - monitor.ldif
-    - tls.ldif
-  when: not dbcfg.stat.exists
+    "{{ ldap_settings }}"
     
 - name: Update the schema
   become: yes
-  shell: "/usr/bin/ldapadd -Y EXTERNAL  -H ldapi:/// -f {{ item }}"
+  shell: "/usr/bin/ldapadd -Y EXTERNAL  -H ldapi:/// -f {{ item.ldif }} && touch {{ item.loaded }}"
+  args:
+    chdir: /etc/openldap/schema
+    creates: "{{ item.loaded }}"
   with_items:
     "{{ schema_adds }}"
-  when: not dbcfg.stat.exists
 
 - name: Install the DB_CONFIG
   become: yes
   template:
     src: "DB_CONFIG.j2"
     dest: /var/lib/ldap/DB_CONFIG
-  when: not dbcfg.stat.exists
 
 - name: Ensure ownership of LDAP db
   become: yes
@@ -76,16 +55,56 @@
     group: ldap
     recurse: yes
 
-- name: Check if LDAP db has been initialized
+- name: Create LDAP top
   become: yes
-  stat:
-    path: /var/lib/ldap/ou.bdb
-  register: ldapdb
-  
-- name: Initialize LDAP db
+  ldap_entry:
+    dn: "{{ ldap_base }}"
+    objectClass:
+      - top
+      - domain
+    state: present
+    server_uri: ldap://localhost
+    bind_dn: "{{ ldap_admin }}"
+    bind_pw: "{{ ldap_root_passwd }}"
+
+- name: Create LDAP admin
   become: yes
-  shell: "/usr/bin/ldapadd -x -w {{ ldap_root_passwd }} -D 'cn={{ ldap_root }},{{ ldap_base }}' -f /etc/openldap/base.ldif"
-  when: not ldapdb.stat.exists
+  ldap_entry:
+    dn: "{{ ldap_admin }}"
+    objectClass:
+      - organizationalRole
+    attributes:
+      description: LDAP Manager
+    state: present
+    server_uri: ldap://localhost
+    bind_dn: "{{ ldap_admin }}"
+    bind_pw: "{{ ldap_root_passwd }}"
+
+- name: Create People
+  become: yes
+  ldap_entry:
+    dn: "ou=People,{{ ldap_base }}"
+    objectClass:
+      - organizationalUnit
+    attributes:
+      ou: People
+    state: present
+    server_uri: ldap://localhost
+    bind_dn: "{{ ldap_admin }}"
+    bind_pw: "{{ ldap_root_passwd }}"
+
+- name: Create Group
+  become: yes
+  ldap_entry:
+    dn: "ou=Group,{{ ldap_base }}"
+    objectClass:
+      - organizationalUnit
+    attributes:
+      ou: Group
+    state: present
+    server_uri: ldap://localhost
+    bind_dn: "{{ ldap_admin }}"
+    bind_pw: "{{ ldap_root_passwd }}"
 
 - name: Copy CA
   become: yes

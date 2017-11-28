@@ -1,8 +1,9 @@
 ---
 # defaults file for ldapserver
 ldap_top: dragonslayer
-ldap_base: "dc={{ldap_top}},dc=local"
+ldap_base: "dc={{ ldap_top }},dc=local"
 ldap_root: ldapadm
+ldap_admin: "cn={{ ldap_root }},{{ ldap_base }}"
 cert_dest_path: '/etc/openldap/certs'
 ca_src_path: '/CA'
 server_src_path: '/certs'
@@ -12,14 +13,38 @@ ca_cert: "{{ cert_dest_path }}/cacert.pem"
 ca_source_cert: "{{ ca_src_path }}/cacert.pem"
 server_source_cert: "{{ server_src_path }}/{{ ansible_nodename }}.cert"
 server_source_key: "{{ server_src_path }}/{{ ansible_nodename }}.key"
+ldap_root_hash: '{SSHA}owHk22Xl2TdvVp4C/w5xY+LLbK3dm07m'
 ldap_root_passwd: 'Pa88w0rd'
 db_lock_expire: true
 db_log_autoremove: true
 db_lg_max: 5242880
 db_cachesize: "0 5242880 1"
 db_checkpoint: "128 15 0"
+ldap_top_dict:
+  dn: olcDatabase={2}hdb,cn=config
+  attr: olcSuffix
+  value: "{{ ldap_base }}"
+ldap_admin_dict:
+  dn: olcDatabase={2}hdb,cn=config
+  attr: olcRootDN
+  value: "{{ ldap_admin }}"
+ldap_passwd_dict:
+  dn: olcDatabase={2}hdb,cn=config
+  attr: olcRootPW
+  value: "{{ ldap_root_hash }}"
+monitor_dict:
+  dn: olcDatabase={1}monitor,cn=config
+  attr: olcAccess
+  value: "{0}to * by dn.base=\"gidNumber=0+uidNumber=0,cn=peercred,cn=external,cn=auth\" read by dn.base=\"cn={{ ldap_admin }}\" read by * none"
+  
+ldap_settings:
+  - "{{ ldap_top_dict }}"
+  - "{{ ldap_admin_dict }}"
+  - "{{ ldap_passwd_dict }}"
+  - "{{ monitor_dict }}"
+
 schema_adds:
-  - /etc/openldap/schema/cosine.ldif
-  - /etc/openldap/schema/nis.ldif
-  - /etc/openldap/schema/inetorgperson.ldif
+  - { ldif: 'cosine.ldif', loaded: 'cosine.loaded'}
+  - { ldif: 'nis.ldif', loaded: 'nis.loaded' }
+  - { ldif: 'inetorgperson.ldif', loaded: 'inetorgperson.loaded' }
 

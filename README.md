@@ -1,38 +1,40 @@
 Role Name
 =========
 
-A brief description of the role goes here.
+Builds an OpenLDAP server. Currently only tested on RHEL 7.
 
 Requirements
 ------------
 
-Any pre-requisites that may not be covered by Ansible itself or the role should be mentioned here. For instance, if the role uses the EC2 module, it may be a good idea to mention in this section that the boto package is required.
+Uses standard Ansible modules.
 
 Role Variables
 --------------
 
-A description of the settable variables for this role should go here, including any variables that are in defaults/main.yml, vars/main.yml, and any variables that can/should be set via parameters to the role. Any variables that are read from other roles and/or the global scope (ie. hostvars, group vars, etc.) should be mentioned here as well.
+ldap_top - top dc for the Domain, used to build the domain and in the base.ldif.j2 template to build the base db
+ldap_base - base of the LDAP Domain
+ldap_root - account used as the root/admin for the LDAP db
+cert_dest_path - remote directory where certs will be copied
+ca_src_path - local directory where the CA cert is stored
+server_src_path - local directory where the server cert and key is stored
+server_cert - full path for the server cert (remote) - default is {{ cert_dest_path }}/{{ ansible_nodename }}.cert
+server_key - full path for the server key (remote) - default is {{ cert_dest_path }}/{{ ansible_nodename }}.key
+ca_cert - full path for the CA cert (remote) - default is {{ cert_dest_path }}/cacert.pem
+ca_source_cert - full path where local copy of the CA cert is stored - default is {{ ca_src_path }}/cacert.pem
+server_source_cert - full path for the server cert (local) - default is {{ server_src_path }}/{{ ansible_nodename }}.cert
+server_source_key - full path for the server key (local) - default is {{ server_src_path }}/{{ ansible_nodename }}.key
+ldap_root_passwd: root/admin password
+schema_adds: list of ldif files to expand the schema for the LDAP db
 
-Dependencies
-------------
+DB_CONFIG setting -
+db_lock_expire - boolean, if true, enables db_lock_expire setting
+db_log_autoremove - boolean, if true, enables auto-remove of transaction logs 
+db_lg_max - sets transaction log max
+db_cachesize - sets cachesize settings
+db_checkpoint - sets checkpoint settins
 
-A list of other roles hosted on Galaxy should go here, plus any details in regards to parameters that may need to be set for other roles, or variables that are used from other roles.
-
-Example Playbook
-----------------
-
-Including an example of how to use your role (for instance, with variables passed in as parameters) is always nice for users too:
-
-    - hosts: servers
-      roles:
-         - { role: username.rolename, x: 42 }
 
 License
 -------
-
 BSD
 
-Author Information
-------------------
-
-An optional section for the role authors to include contact information, or a website (HTML is not allowed).
