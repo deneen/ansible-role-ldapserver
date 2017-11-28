@@ -34,10 +34,9 @@
     
 - name: Update the schema
   become: yes
-  shell: "/usr/bin/ldapadd -Y EXTERNAL  -H ldapi:/// -f {{ item.ldif }} && touch {{ item.loaded }}"
+  shell: "/usr/bin/ldapadd -Y EXTERNAL  -H ldapi:/// -f {{ item }} && touch {{ item }}.loaded"
   args:
-    chdir: /etc/openldap/schema
-    creates: "{{ item.loaded }}"
+    creates: "{{ item }}.loaded"
   with_items:
     "{{ schema_adds }}"
 

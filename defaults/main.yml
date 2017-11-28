@@ -44,7 +44,7 @@ ldap_settings:
   - "{{ monitor_dict }}"
 
 schema_adds:
-  - { ldif: 'cosine.ldif', loaded: 'cosine.loaded'}
-  - { ldif: 'nis.ldif', loaded: 'nis.loaded' }
-  - { ldif: 'inetorgperson.ldif', loaded: 'inetorgperson.loaded' }
+  - '/etc/openldap/schema/cosine.ldif'
+  - '/etc/openldap/schema/nis.ldif'
+  - '/etc/openldap/schema/inetorgperson.ldif'
 
